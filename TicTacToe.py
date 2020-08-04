@@ -12,12 +12,6 @@ GAP = int(WIDTH*0.2)
 BLACK = (0,0,0)
 FONT = pygame.font.SysFont("comicsans", 25)
 
-class Player():
-	def __init__(self, name, score):
-		self.name = name
-		self.score = score
-
-
 
 class Spot():
 	def __init__(self, row, col, char=None):
@@ -114,8 +108,6 @@ def main(win, width):
 
 	run = True
 	FPS = 15
-	for name in ["Player_0", "Player_1"]:
-		player = Player(name, 0) 
 
 	move_count = 0
 	clock = pygame.time.Clock()
@@ -143,7 +135,7 @@ def main(win, width):
 
 		if move_count >= 5:
 			if win_or_draw(grid, move_count):
-				print("O Wins!" if move_count%2 == 0 else "X Wins!")
+				print("O Wins!" if move_count%2 == 0 else "X Wins!") # use message_render func
 				run = False
 
 		if message != "": 
