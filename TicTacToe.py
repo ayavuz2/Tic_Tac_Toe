@@ -10,7 +10,7 @@ pygame.display.set_caption("TicTacToe")
 GAP = int(WIDTH*0.2)
 
 BLACK = (0,0,0)
-FONT = pygame.font.SysFont("comicsans", 25)
+FONT = pygame.font.SysFont("comicsans", 40)
 
 
 class Spot():
@@ -21,9 +21,10 @@ class Spot():
 		self.char = char
 		self.char_label = None
 
-	def fill_char(self, move_count):
-		self.char = 'X' if move_count%2 == 0 else 'O'
-		self.char_label = FONT.render(self.char, 1, BLACK) 
+	def fill_char(self, move_count, allow_move):
+		if allow_move:
+			self.char = 'X' if move_count%2 == 0 else 'O'
+			self.char_label = FONT.render(self.char, 1, BLACK) 
 
 	def is_available(self):
 		if self.char == None:
@@ -32,21 +33,22 @@ class Spot():
 
 	def render_char(self):
 		if self.char != None:
-			WIN.blit(self.char_label, (self.width*1.5 + self.col*self.width - self.char_label.get_height()//2, 
-				self.width*1.5 + self.row*self.width - self.char_label.get_width()//2))
-
-	def won_by(self):
-		pass
+			WIN.blit(self.char_label, (self.width*1.5 + self.col*self.width - self.char_label.get_width()//2, 
+				self.width*1.5 + self.row*self.width - self.char_label.get_height()//2))
 
 
-def win_or_draw(grid, move_count): # needs adding!
+def is_won(grid, move_count):
+	if move_count == 9: 
+		return True
 	for i in range(3):
 		if grid[i][0].char == grid[i][1].char == grid[i][2].char != None:
 			return True
-		elif grid[0][i].char == grid[1][i].char == grid[2][i].char != None:
+		if grid[0][i].char == grid[1][i].char == grid[2][i].char != None:
 			return True
-		elif move_count == 9: 
-			return True
+	if grid[0][0].char == grid[1][1].char == grid[2][2].char != None:
+		return True
+	if grid[0][2].char == grid[1][1].char == grid[2][0].char != None:
+		return True
 	return False
 
 
@@ -56,8 +58,7 @@ def get_click_pos(pos, width):
 		row = y//GAP - 1
 		col = x//GAP - 1
 		return row, col
-	else:
-		return None, None
+	return None, None
 
 
 def message_render(win, width, message=""):
@@ -67,7 +68,6 @@ def message_render(win, width, message=""):
 
 def make_grid(width):
 	grid = [[x for x in range(3)] for y in range(3)]
-	print(grid)
 	for i in range(3):
 		for j in range(3):
 			spot = Spot(i, j)
@@ -104,7 +104,8 @@ def main(win, width):
 	grid = make_grid(width)
 	
 	message = ""	
-	message_count = 0
+	count = 0
+	allow_move = True
 
 	run = True
 	FPS = 15
@@ -126,26 +127,49 @@ def main(win, width):
 				row, col = get_click_pos(pos, width)
 				
 				if row != None and grid[row][col].is_available():
-					grid[row][col].fill_char(move_count)
-					move_count += 1
-					print(move_count)
+					grid[row][col].fill_char(move_count, allow_move)
+					if allow_move:
+						move_count += 1
 				else:
-					message = "Its busy"
+					message = "Click one of the empty spots"
 		
-
 		if move_count >= 5:
-			if win_or_draw(grid, move_count):
-				print("O Wins!" if move_count%2 == 0 else "X Wins!") # use message_render func
+			if is_won(grid, move_count):
+				if move_count != 9:
+					message = "O Wins!" if move_count%2 == 0 else "X Wins!"
+				else:
+					message = "Draw!"
+				allow_move = False
+
+		if message != "" or not allow_move: 
+			count += 1
+		if count > FPS*2:
+			count = 0
+			message = ""
+			draw(win, width, grid, message)
+			if not allow_move:
 				run = False
 
-		if message != "": 
-			message_count += 1
-		if message_count > FPS*3:
-			message_count = 0
-			message = ""
+
+def main_menu():
+	title_font = pygame.font.SysFont("comicsans", 50)
+	run = True
+	count = 0
+	while run:
+		title_label = title_font.render("Press mouse to begin!", 1, (255,0,0))
+		if count == 0:
+			WIN.blit(title_label, (WIDTH//2 - title_label.get_width()//2, WIDTH//2 - title_label.get_height()//2))
+		else:
+			WIN.blit(title_label, (WIDTH//2 - title_label.get_width()//2, GAP//2 - title_label.get_height()//2))
+
+		pygame.display.update()
+
+		for event in pygame.event.get():
+			if event.type == pygame.QUIT:
+				run = False
+			if event.type == pygame.MOUSEBUTTONDOWN:
+				count += 1
+				main(WIN, WIDTH)
 
 
-	pygame.quit()
-
-
-main(WIN, WIDTH)
+main_menu()
